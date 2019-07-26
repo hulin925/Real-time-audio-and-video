@@ -1,0 +1,291 @@
+<!-- subscribe.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="user-scalable=0"
+    />
+  <title>法务云律师直播</title>
+</head>
+<style>
+  /*
+  */
+  video {
+    width: 100%;
+    height: 100%;
+    /*object-fit: contain;*/
+    background: #000;
+    display: inline-block;
+    /*position:absolute;*/
+    object-fit: fill;
+     /*object-fit: cover;*/
+  }
+
+  #remotetracks{
+    position:absolute;
+    height:100vh;
+    width:100vh;
+    top:0;
+    left:100%;
+    transform:rotate(90deg);
+    transform-origin:0 0 0;
+  }
+  body{
+    margin:0;
+  }
+  #dis{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background: #839cd5;
+    z-index: 999;
+    /*display: none;*/
+  }
+  .remotetracksInfo{
+    position: absolute;
+    top:45%;
+    left:50%;
+    transform: translateY(-50%);
+    transform: translateX(-50%);
+  }
+  input{
+    width:30rem;
+    height:5rem;
+    border:1px solid #ccc;
+    padding:0 1rem;
+    font-size:2.5rem;
+    text-align:center;
+  }
+  .bottom{
+    margin-top:2rem;
+    text-align:center;
+  }
+  button{
+    font-size:2.5rem;
+    padding:0.2rem 2rem;
+  }
+
+
+  
+  
+  
+  html{
+      font-size:16px;
+    }
+    ul{
+      margin:0;
+      padding:0;
+    }
+    #list{
+      position:absolute;
+      height:100vh;
+      width:100vh;
+      top:0;
+      left:100%;
+      transform:rotate(90deg);
+      transform-origin:0 0 0;
+    }
+    #list .listTop{
+      height:40rem;
+    }
+    .listTop .topLeft{
+      width:67%;
+      height:100%;
+      float:left;
+    }
+    .listTop .topRight{
+      width:33%;
+      height:100%;
+      float:right;
+    }
+    .listTop .topRight div{
+      width:100%;
+      height:50%;
+    }
+    #list .listBottom{
+      height:23rem;
+    }
+    #list .listBottom div{
+      width:33.33%;
+      height:100%;
+      float:left;
+    }
+</style>
+
+<body>
+  <!-- <p>远端音视频轨</p> -->
+  <div id="dis">
+    <div class="remotetracksInfo">
+      <div class="top">
+        <input type="number" placeholder="请输入房间号">
+      </div>
+      <div class="bottom">
+        <button onclick="joinremotetracks()">加入房间</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="list">
+    <div class="listTop">
+      <div class="topLeft"></div>
+      <div class="topRight">
+        <div class="topRightTop"></div>
+        <div class="topRightBottom"></div>
+      </div>
+    </div>
+    <div class="listBottom">
+      <div class="bottomLeft"></div>
+      <div class="bottomCenter"></div>
+      <div class="bottomRight"></div>
+    </div>
+  </div>
+
+
+  <div id="remotetracks"></div>
+  <!-- 同样，这里引入我们的 SDK -->
+  <script src="./pili-rtc-web.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script>
+    $(function() {
+      var URL = window.URL || window.webkitURL; // 获取到window.URL对象   
+
+navigator.getUserMedia({  
+
+  video: true ,
+  audio: true 
+
+}, function(stream) {  
+
+  video.src = URL.createObjectURL(stream);// 将获取到的视频流对象转换为地址  
+
+  video.play();     
+
+}, function(error) {  
+
+  console.log(error.name || error);  
+
+});
+      $('#remotetracks').css('height',$(window).width());
+      $('#remotetracks').css('width',$(window).height());
+    })
+    
+    var remotetracksInfo;
+    // 确认引入成功
+    // console.log("current version", QNRTC.version);
+    // 这里采用的是 async/await 的异步方案，您也可以根据需要或者习惯替换成 Promise 的写法
+    async function joinremotetracks() {
+      var params = {id:13};
+      url = 'https://law.sanhedao.com.cn/public/index.php/uapi/v3/home/getallmsgbyqiniu';
+      $.post(url,params,function(data){
+          remotetracksInfo=JSON.parse(data).data;
+      });
+      // 初始化一个房间 Session 对象, 这里使用 Track 模式
+      const myremotetracks = new QNRTC.TrackModeSession();
+      // 这里替换成刚刚生成的 remotetracksToken
+      await myremotetracks.joinRoomWithToken("n83SJEyVTcxTlDas9qO3WR-68ew3AXwhudltt0gy:_2_FUGfe0R0CwQdmTmRozE4_eNg=:eyJhcHBJZCI6ImU5djY3dmk1dyIsInJvb21OYW1lIjoiZnd5MTMiLCJ1c2VySWQiOiI5OTkiLCJleHBpcmVBdCI6MTU2MzkzMDM0OSwicGVybWlzc2lvbiI6InVzZXIifQ==");
+      console.log("joinremotetracks success!");
+
+      autoSubscribe(myremotetracks);
+      // var dis=document.getElementById('dis');
+      $('#dis').css('display','none');
+      // dis.style.display="none";
+    }
+
+    // 这里的参数 myremotetracks 是指刚刚加入房间时初始化的 Session 对象, 同上
+    // trackInfoList 是一个 trackInfo 的列表，订阅支持多个 track 同时订阅。
+    async function subscribe(myremotetracks, trackInfoList) {
+      // 通过传入 trackId 调用订阅方法发起订阅，成功会返回相应的 Track 对象，也就是远端的 Track 列表了
+      const remoteTracks = await myremotetracks.subscribe(trackInfoList.map(info => info.trackId));
+
+      // 选择页面上的一个元素作为父元素，播放远端的音视频轨
+      const remoteElement = document.getElementById("remotetracks");
+      let els = remoteElement.getElementsByTagName('video');
+      // 遍历返回的远端 Track，调用 play 方法完成在页面上的播放
+      var userIdList = []
+      for (const remoteTrack of remoteTracks) {
+        // console.log(remoteTrack,8889999)
+        remoteElement['data-id'] = remoteTrack.userId;
+        // 
+         remoteTrack.play(remoteElement);
+        if(remoteTrack.info.kind=='video'){
+          console.log(remoteTrack)
+           userId = remoteTrack.userId;
+           userIdList.push(userId)
+         
+      }
+        for (var j = 0; j < els.length; j++) {
+                els[j].dataset.userId = userIdList[j];
+              }
+            }
+      for (var i = 0; i < els.length; i++) {
+        els[i].style.objectFit="cover";
+        els[i].style.width = "100%";
+          els[i].style.height = "100%";
+        if(els[i].dataset.userId=='fwy'+remotetracksInfo.spzuid){
+          $('.topLeft').append(els[i]);
+          
+          // els[i].style.left = "0rem";
+        }else if(els[i].dataset.userId=='fwy'+remotetracksInfo.bguid){
+          $('.topRightTop').append(els[i]);
+          // els[i].style.width = "100%";
+          // els[i].style.width = "auto"
+          // els[i].style.height = "11rem"
+          // els[i].style.top = "0";
+          // els[i].style.left = "18rem";
+        }else if(els[i].dataset.userId=='fwy'+remotetracksInfo.bglsuid){
+           $('.topRightBottom').append(els[i]);
+          // els[i].style.width = "auto"
+          // els[i].style.height = "11rem"
+          // els[i].style.top = "0";
+          // els[i].style.left = "18rem";
+        }else if(els[i].dataset.userId=='fwy'+remotetracksInfo.yglsuid){
+          $('.bottomCenter').append(els[i]);
+          // els[i].style.width = "auto"
+          // els[i].style.height = "12rem"
+          // els[i].style.left = "18rem";
+          // els[i].style.bottom = "24rem";
+        }
+        else if(els[i].dataset.userId=='fwy'+remotetracksInfo.yguid){
+           $('.bottomLeft').append(els[i]);
+          // els[i].style.width = "auto"
+          // els[i].style.height = "11rem"
+          // els[i].style.bottom = "0rem";
+          // els[i].style.right = "0rem";
+        }
+        else if(els[i].dataset.userId=='fwy'+remotetracksInfo.sjyuid){
+          $('.bottomRight').append(els[i]);
+          // els[i].style.width = "4rem"
+          // els[i].style.height = "4rem"
+          // els[i].style.bottom = "0rem";
+          // els[i].style.right = "0rem";
+        }
+      }
+      console.log(remotetracksInfo,89898)
+    }
+
+    function autoSubscribe(myremotetracks) {
+      const trackInfoList = myremotetracks.trackInfoList;
+      console.log("remotetracks current trackInfo list", trackInfoList)
+
+      // 调用我们刚刚编写的 subscribe 方法
+      // 注意这里我们没有使用 async/await，而是使用了 Promise，大家可以思考一下为什么
+      subscribe(myremotetracks, trackInfoList)
+        .then(() => console.log("subscribe success!"))
+        .catch(e => console.log("subscribe error", e));
+
+      // 添加事件监听，当房间中出现新的 Track 时就会触发，参数是 trackInfo 列表
+      myremotetracks.on("track-add", (trackInfoList) => {
+        console.log("get track-add event!", trackInfoList);
+        subscribe(myremotetracks, trackInfoList)
+          .then(() => console.log("subscribe success!"))
+          .catch(e => console.log("subscribe error", e));
+      });
+      // 就是这样，就像监听 DOM 事件一样通过 on 方法监听相应的事件并给出处理函数即可
+    }
+  </script>
+</body>
+
+</html>
