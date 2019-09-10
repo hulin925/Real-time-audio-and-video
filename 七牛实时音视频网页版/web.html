@@ -255,7 +255,7 @@
                   fid:number,
                   pwd:password
                 },
-                success:function(res){
+                success: async function(res){
                   var data=JSON.parse(res);
                   if(data.code==10000){
                       showMsg(data.message, "success", 2000);
@@ -266,7 +266,7 @@
                         data:{
                           id:number,
                         },
-                        success:function(res){
+                        success: async function(res){
                           var data=JSON.parse(res);
                           var roomData=data.data.info;
                           console.log(data.data.info,555555)
@@ -283,7 +283,7 @@
                               const myremotetracks = new QNRTC.TrackModeSession();
                               // 这里替换成刚刚生成的 remotetracksToken
                               // await myremotetracks.joinRoomWithToken(roomData);
-                              myremotetracks.joinRoomWithToken(roomData);
+                              await myremotetracks.joinRoomWithToken(roomData);
                               console.log("joinremotetracks success!");
                               autoSubscribe(myremotetracks);
                               // var dis=document.getElementById('dis');
